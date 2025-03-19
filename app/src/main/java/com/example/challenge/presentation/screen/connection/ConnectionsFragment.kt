@@ -1,15 +1,14 @@
 package com.example.challenge.presentation.screen.connection
 
-import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.challenge.presentation.base.BaseFragment
 import com.example.challenge.databinding.FragmentConnectionsBinding
-import com.example.challenge.data.mapper.base.BaseFragment
-import com.example.challenge.presentation.event.conection.ConnectionEvent
 import com.example.challenge.presentation.extension.showSnackBar
 import com.example.challenge.presentation.state.connection.ConnectionState
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,21 +19,23 @@ class ConnectionsFragment :
     BaseFragment<FragmentConnectionsBinding>(FragmentConnectionsBinding::inflate) {
 
     private val viewModel: ConnectionsViewModel by viewModels()
-    private lateinit var connectionsRecyclerAdapter: ConnectionsRecyclerAdapter
+    private val connectionsRecyclerAdapter by lazy { ConnectionsRecyclerAdapter() }
+    private val navController by lazy { findNavController() }
 
-    override fun bind() {
-        connectionsRecyclerAdapter = ConnectionsRecyclerAdapter()
-        binding.apply {
+    override fun init() {
+        initRecycler()
+    }
+
+    private fun initRecycler() {
+        with(binding){
             recyclerConnections.layoutManager = LinearLayoutManager(requireContext())
-            recyclerConnections.setHasFixedSize(true)
             recyclerConnections.adapter = connectionsRecyclerAdapter
         }
-        viewModel.onEvent(ConnectionEvent.FetchConnections)
     }
 
     override fun bindViewActionListeners() {
         binding.btnLogOut.setOnClickListener {
-            viewModel.onEvent(ConnectionEvent.LogOut)
+            viewModel.onEvent(ConnectionScreenActions.LogOut)
         }
     }
 
@@ -50,29 +51,27 @@ class ConnectionsFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiEvent.collect {
-                    handleNavigationEvents(event = it)
+                    handleEvents(event = it)
                 }
             }
         }
     }
 
     private fun handleConnectionState(state: ConnectionState) {
-        binding.loaderInclude.loaderContainer.visibility =
-            if (state.isLoading) View.VISIBLE else View.GONE
-
-        state.connections?.let {
-            connectionsRecyclerAdapter.submitList(it)
-        }
-
-        state.errorMessage?.let {
-            binding.root.showSnackBar(message = it)
-            viewModel.onEvent(ConnectionEvent.ResetErrorMessage)
-        }
+        binding.loaderInclude.loaderContainer.isVisible = state.isLoading
+        connectionsRecyclerAdapter.submitList(state.connections)
     }
 
-    private fun handleNavigationEvents(event: ConnectionsViewModel.ConnectionUiEvent) {
-        findNavController().navigate(ConnectionsFragmentDirections.actionFriendsFragmentToLogInFragment())
+    private fun handleEvents(event: ConnectionUiEvent) {
+        when (event) {
+            ConnectionUiEvent.NavigateToLogIn -> {
+                navController.navigate(ConnectionsFragmentDirections.actionConnectionsFragmentToLogInFragment())
+            }
+
+            is ConnectionUiEvent.ShowError -> {
+                binding.root.showSnackBar(event.error)
+            }
+        }
+
     }
 }
-
-class String

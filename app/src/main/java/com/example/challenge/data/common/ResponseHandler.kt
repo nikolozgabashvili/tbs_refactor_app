@@ -1,14 +1,12 @@
 package com.example.challenge.data.common
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import com.example.challenge.domain.user_data_key.PreferenceKeys
-import kotlinx.coroutines.flow.first
+import com.example.challenge.domain.common.Resource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.flowOn
 import retrofit2.Response
 
-class HandleResponse() {
+class ResponseHandler {
     fun <T : Any> safeApiCall(call: suspend () -> Response<T>) = flow {
         emit(Resource.Loading(loading = true))
         try {
@@ -23,5 +21,5 @@ class HandleResponse() {
             emit(Resource.Error(errorMessage = e.message ?: ""))
         }
         emit(Resource.Loading(loading = false))
-    }
+    }.flowOn(Dispatchers.IO)
 }

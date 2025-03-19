@@ -1,10 +1,11 @@
-package com.example.challenge.data.mapper.base
+package com.example.challenge.presentation.base
 
-import android.app.Fragment
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 
 typealias Inflater<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
@@ -24,7 +25,7 @@ abstract class BaseFragment<VB : ViewBinding>(private val inflate: Inflater<VB>)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        bind()
+        init()
         bindViewActionListeners()
         bindObserves()
     }
@@ -34,7 +35,7 @@ abstract class BaseFragment<VB : ViewBinding>(private val inflate: Inflater<VB>)
         _binding = null
     }
 
-    abstract fun bind()
+    abstract fun init()
 
     abstract fun bindViewActionListeners()
 

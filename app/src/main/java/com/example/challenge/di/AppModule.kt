@@ -1,18 +1,17 @@
 package com.example.challenge.di
 
-import com.example.challenge.data.common.HandleResponse
+import com.example.challenge.BuildConfig
+import com.example.challenge.data.AppInterceptor
+import com.example.challenge.data.common.ResponseHandler
 import com.example.challenge.data.service.connection.ConnectionsService
 import com.example.challenge.data.service.log_in.LogInService
+import com.example.challenge.domain.repository.datastore.DataStoreManager
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -26,23 +25,14 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        authTokenFlow: Flow<String?>, loggingInterceptor: HttpLoggingInterceptor
+        appInterceptor: AppInterceptor,
+        loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         val clientBuilder = OkHttpClient.Builder()
-
-        clientBuilder
-            .addInterceptor { chain ->
-                val authToken = runBlocking { authTokenFlow.first() }
-                val newRequest = if (!authToken.isNullOrBlank()) {
-                    chain.request().newBuilder()
-                        .addHeader("Authorization", "Bearer $authToken")
-                        .build()
-                } else {
-                    chain.request()
-                }
-                chain.proceed(newRequest)
-            }
-        clientBuilder.addInterceptor(loggingInterceptor)
+        clientBuilder.addInterceptor(appInterceptor)
+        if (BuildConfig.DEBUG) {
+            clientBuilder.addInterceptor(loggingInterceptor)
+        }
         return clientBuilder.build()
     }
 
@@ -68,11 +58,17 @@ object AppModule {
             .build()
     }
 
+    @Provides
+    @Singleton
+    fun provideAppInterceptor(
+        dataStoreManagerImpl: DataStoreManager
+    ): AppInterceptor = AppInterceptor(dataStoreManagerImpl)
+
 
     @Singleton
     @Provides
-    fun provideHandleResponse(): HandleResponse {
-        return HandleResponse()
+    fun provideHandleResponse(): ResponseHandler {
+        return ResponseHandler()
     }
 
     @Singleton

@@ -6,9 +6,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import com.example.challenge.data.mapper.base.BaseFragment
 import com.example.challenge.databinding.FragmentLogInBinding
-import com.example.challenge.presentation.event.log_in.LogInEvent
+import com.example.challenge.presentation.base.BaseFragment
 import com.example.challenge.presentation.extension.showSnackBar
 import com.example.challenge.presentation.state.log_in.LogInState
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,8 +17,9 @@ import kotlinx.coroutines.launch
 class LogInFragment : BaseFragment<FragmentLogInBinding>(FragmentLogInBinding::inflate) {
 
     private val viewModel: LogInViewModel by viewModels()
+    private val navController by lazy { findNavController() }
 
-    override fun bind() {
+    override fun init() {
 
     }
 
@@ -41,7 +41,7 @@ class LogInFragment : BaseFragment<FragmentLogInBinding>(FragmentLogInBinding::i
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiEvent.collect {
-                    handleNavigationEvents(event = it)
+                    handleEvents(event = it)
                 }
             }
         }
@@ -49,7 +49,7 @@ class LogInFragment : BaseFragment<FragmentLogInBinding>(FragmentLogInBinding::i
 
     private fun logIn() {
         viewModel.onEvent(
-            LogInEvent.LogIn(
+            LoginScreenAction.LogIn(
                 email = binding.etEmail.text.toString(),
                 password = binding.etPassword.text.toString()
             )
@@ -60,17 +60,25 @@ class LogInFragment : BaseFragment<FragmentLogInBinding>(FragmentLogInBinding::i
         binding.loaderInclude.loaderContainer.visibility =
             if (logInState.isLoading) View.VISIBLE else View.GONE
 
-        logInState.errorMessage?.let {
-            binding.root.showSnackBar(message = it)
-            viewModel.onEvent(LogInEvent.ResetErrorMessage)
-        }
+
     }
 
-    private fun handleNavigationEvents(event: LogInViewModel.LogInUiEvent) {
+    private fun handleEvents(event: LogInUiEvent) {
         when (event) {
-            is LogInViewModel.LogInUiEvent.NavigateToConnections -> findNavController().navigate(
-                LogInFragmentDirections.actionLogInFragmentToFriendsFragment()
+            is LogInUiEvent.NavigateToConnections -> navController.navigate(
+                LogInFragmentDirections.actionLogInFragmentToConnectionsFragment()
             )
+
+            is LogInUiEvent.ShowError -> {
+                event.error?.let {
+                    binding.root.showSnackBar(message = event.error)
+                }
+            }
+
+
         }
     }
 }
+
+
+
