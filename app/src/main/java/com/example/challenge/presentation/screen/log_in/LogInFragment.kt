@@ -11,6 +11,7 @@ import com.example.challenge.presentation.base.BaseFragment
 import com.example.challenge.presentation.extension.showSnackBar
 import com.example.challenge.presentation.state.log_in.LogInState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -32,7 +33,7 @@ class LogInFragment : BaseFragment<FragmentLogInBinding>(FragmentLogInBinding::i
     override fun bindObserves() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.logInState.collect {
+                viewModel.logInState.collectLatest {
                     handleLogInState(logInState = it)
                 }
             }

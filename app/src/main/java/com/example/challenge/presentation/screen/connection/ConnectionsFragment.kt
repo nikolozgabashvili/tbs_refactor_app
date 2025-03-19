@@ -12,6 +12,7 @@ import com.example.challenge.databinding.FragmentConnectionsBinding
 import com.example.challenge.presentation.extension.showSnackBar
 import com.example.challenge.presentation.state.connection.ConnectionState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -42,7 +43,7 @@ class ConnectionsFragment :
     override fun bindObserves() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.connectionState.collect {
+                viewModel.connectionState.collectLatest {
                     handleConnectionState(state = it)
                 }
             }
